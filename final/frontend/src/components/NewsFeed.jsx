@@ -8,7 +8,7 @@ export default function NewsFeed({ articles, loading }) {
     setExpandedId(expandedId === index ? null : index);
   };
 
-  // Loading State
+  // Loading state
   if (loading) {
     return (
       <div style={{ color: 'var(--text-secondary)' }}>
@@ -17,7 +17,7 @@ export default function NewsFeed({ articles, loading }) {
     );
   }
 
-  // No Articles
+  // No articles
   if (!articles || articles.length === 0) {
     return (
       <div style={{ color: 'var(--text-secondary)' }}>
@@ -28,148 +28,134 @@ export default function NewsFeed({ articles, loading }) {
 
   return (
     <div className="news-grid">
-      {articles.slice(0, 6).map((article, idx) => (
+      {articles.slice(0, 6).map((article, idx) => {
 
-        <div
-          key={idx}
-          className="news-card"
-          onClick={() => toggleExpand(idx)}
-          style={{
-            cursor: 'pointer',
-            transition: '0.3s ease'
-          }}
-        >
+        const articleLink =
+          article.url ||
+          article.link ||
+          article.sourceUrl ||
+          article.href;
 
-          {/* Article Image */}
-          {(article.image || article.urlToImage) && (
-            <img
-              src={article.image || article.urlToImage}
-              alt={article.title}
-              className="news-card-image"
-              style={{
-                width: '100%',
-                height: '220px',
-                objectFit: 'cover',
-                borderTopLeftRadius: '16px',
-                borderTopRightRadius: '16px'
-              }}
-            />
-          )}
-
-          {/* Card Content */}
-          <div className="news-card-content">
-
-            {/* Source */}
-            <div className="news-card-source">
-              {article.source?.name || 'Indian Express'}
-            </div>
-
-            {/* Title */}
-            <h3 className="news-card-title">
-              {article.title}
-            </h3>
-
-            {/* Meta */}
-            <div className="news-card-meta">
-
-              <span>
-                {article.publishedAt
-                  ? new Date(article.publishedAt).toLocaleDateString()
-                  : 'Latest News'}
-              </span>
-
-              {expandedId === idx ? (
-                <ChevronUp size={16} />
-              ) : (
-                <ChevronDown size={16} />
-              )}
-
-            </div>
-
-          </div>
-
-          {/* Expandable Summary */}
+        return (
           <div
-            className={`news-summary-expand ${
-              expandedId === idx ? 'active' : ''
-            }`}
-            style={{
-              padding: expandedId === idx ? '1rem' : '0 1rem',
-              maxHeight: expandedId === idx ? '500px' : '0px',
-              overflow: 'hidden',
-              transition: 'all 0.3s ease'
-            }}
+            key={idx}
+            className="news-card"
+            onClick={() => toggleExpand(idx)}
+            style={{ cursor: 'pointer' }}
           >
 
-            {/* Summary Label */}
-            <div
-              className="summary-label"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                marginBottom: '1rem',
-                color: '#00d4ff',
-                fontWeight: 'bold'
-              }}
-            >
-              <Cpu size={14} />
-              AI Quick Summary
+            {/* Image */}
+            {(article.image || article.urlToImage) && (
+              <img
+                src={article.image || article.urlToImage}
+                alt={article.title}
+                className="news-card-image"
+                style={{
+                  width: '100%',
+                  height: '200px',
+                  objectFit: 'cover',
+                  borderRadius: '10px'
+                }}
+              />
+            )}
+
+            {/* Content */}
+            <div className="news-card-content">
+
+              {/* Source */}
+              <div className="news-card-source">
+                {article.source?.name || 'Indian Express'}
+              </div>
+
+              {/* Title */}
+              <h3 className="news-card-title">
+                {article.title || 'No Title'}
+              </h3>
+
+              {/* Date */}
+              <div className="news-card-meta">
+                <span>
+                  {article.publishedAt
+                    ? new Date(article.publishedAt).toLocaleDateString()
+                    : 'No Date'}
+                </span>
+
+                {expandedId === idx ? (
+                  <ChevronUp size={16} />
+                ) : (
+                  <ChevronDown size={16} />
+                )}
+              </div>
             </div>
 
-            {/* Summary */}
-            <p
-              className="summary-text"
-              style={{
-                color: '#d1d5db',
-                lineHeight: '1.6'
-              }}
-            >
-              {article.description ||
-                article.content ||
-                'No summary available for this article.'}
-            </p>
+            {/* Expanded Section */}
+            {expandedId === idx && (
+              <div
+                style={{
+                  marginTop: '15px',
+                  padding: '15px',
+                  background: '#111827',
+                  borderRadius: '10px',
+                }}
+              >
 
-            {/* Read Full Article Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '10px',
+                    color: '#00d4ff',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  <Cpu size={14} />
+                  AI Quick Summary
+                </div>
 
-                const link =
-                  article.link ||
-                  article.url ||
-                  article.sourceUrl;
+                <p
+                  style={{
+                    color: '#d1d5db',
+                    lineHeight: '1.6'
+                  }}
+                >
+                  {article.description ||
+                    article.content ||
+                    'No summary available for this article.'}
+                </p>
 
-                if (link) {
-                  window.open(
-                    link,
-                    '_blank',
-                    'noopener,noreferrer'
-                  );
-                } else {
-                  alert('Article link not available');
-                }
-              }}
-              style={{
-                marginTop: '16px',
-                background: '#00d4ff',
-                color: '#000',
-                border: 'none',
-                padding: '10px 16px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                fontSize: '14px'
-              }}
-            >
-              Read Full Article
-            </button>
+                {/* Button */}
+                {articleLink ? (
+                  <a
+                    href={articleLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      display: 'inline-block',
+                      marginTop: '15px',
+                      background: '#00d4ff',
+                      color: 'black',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      textDecoration: 'none',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    Read Full Article
+                  </a>
+                ) : (
+                  <p style={{ color: 'red', marginTop: '10px' }}>
+                    Article link not available
+                  </p>
+                )}
+
+              </div>
+            )}
 
           </div>
-
-        </div>
-
-      ))}
+        );
+      })}
     </div>
   );
 }
