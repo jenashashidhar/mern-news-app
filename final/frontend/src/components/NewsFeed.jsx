@@ -1,145 +1,222 @@
-const express = require("express");
-const axios = require("axios");
-const cors = require("cors");
+import React, { useState } from "react";
 
-const app = express();
+export default function NewsFeed({ articles, loading }) {
 
-app.use(cors());
+  const [expandedCard, setExpandedCard] = useState(null);
 
-/**
- * Clean article text
- */
-function cleanText(text = "") {
-  return text
-    .replace(/\[\+\d+\schars\]/g, "")
-    .replace(/<[^>]*>/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-/**
- * AI-style summary generator
- */
-function generateAISummary(article) {
-
-  const title = cleanText(article.title);
-  const description = cleanText(article.description);
-  const content = cleanText(article.content);
-
-  // Combine article text
-  const fullText = `${description} ${content}`;
-
-  // Split into sentences
-  const sentences = fullText
-    .split(/[.!?]/)
-    .map(sentence => sentence.trim())
-    .filter(sentence => sentence.length > 25);
-
-  // Remove duplicate sentences
-  const uniqueSentences = [...new Set(sentences)];
-
-  // Pick best sentences
-  let selected = [];
-
-  // First prefer description
-  if (description) {
-    selected.push(description);
-  }
-
-  // Add useful content sentences
-  for (let sentence of uniqueSentences) {
-
-    // Avoid repeating description
-    if (
-      !selected.includes(sentence) &&
-      sentence.length > 40
-    ) {
-      selected.push(sentence);
+  // Toggle Summary
+  const handleSummary = (index) => {
+    if (expandedCard === index) {
+      setExpandedCard(null);
+    } else {
+      setExpandedCard(index);
     }
+  };
 
-    // Limit summary length
-    if (selected.length >= 3) break;
-  }
-
-  // Smart fallback
-  if (selected.length === 0) {
-    selected.push(
-      `This article discusses recent technology updates involving ${title}.`
+  // Loading
+  if (loading) {
+    return (
+      <div style={{ color: "white" }}>
+        Loading latest tech news...
+      </div>
     );
   }
 
-  // Add AI-style ending
-  const endings = [
-    "This development could influence future technology trends.",
-    "Experts are closely monitoring the impact of this update.",
-    "The story highlights rapid innovation in the tech industry.",
-    "This news reflects ongoing changes in digital technology."
-  ];
+  // No articles
+  if (!articles || articles.length === 0) {
+    return (
+      <div style={{ color: "white" }}>
+        No articles found.
+      </div>
+    );
+  }
 
-  const randomEnding =
-    endings[Math.floor(Math.random() * endings.length)];
+  return (
 
-  return `${selected.join(". ")}. ${randomEnding}`;
+    <div
+      style={{
+        display: "grid",
+        gap: "25px",
+      }}
+    >
+
+      {articles.slice(0, 6).map((article, index) => {
+
+        const summary =
+          article.description ||
+          article.content ||
+          "No AI summary available.";
+
+        const articleLink =
+          article.url ||
+          article.link ||
+          article.sourceUrl;
+
+        return (
+
+          <div
+            key={index}
+            style={{
+              background: "#111827",
+              borderRadius: "16px",
+              overflow: "hidden",
+              border: "1px solid #2d3748",
+            }}
+          >
+
+            {/* IMAGE */}
+            {(article.image || article.urlToImage) && (
+
+              <img
+                src={article.image || article.urlToImage}
+                alt={article.title}
+                style={{
+                  width: "100%",
+                  height: "220px",
+                  objectFit: "cover",
+                }}
+              />
+
+            )}
+
+            {/* CONTENT */}
+            <div style={{ padding: "18px" }}>
+
+              {/* SOURCE */}
+              <div
+                style={{
+                  color: "#00d4ff",
+                  fontWeight: "bold",
+                  marginBottom: "10px",
+                  fontSize: "14px",
+                }}
+              >
+                {article.source?.name || "Tech News"}
+              </div>
+
+              {/* TITLE */}
+              <h2
+                style={{
+                  color: "white",
+                  fontSize: "20px",
+                  marginBottom: "12px",
+                  lineHeight: "1.4",
+                }}
+              >
+                {article.title}
+              </h2>
+
+              {/* DATE */}
+              <p
+                style={{
+                  color: "#9ca3af",
+                  marginBottom: "16px",
+                }}
+              >
+                {article.publishedAt
+                  ? new Date(
+                      article.publishedAt
+                    ).toLocaleDateString()
+                  : "Latest"}
+              </p>
+
+              {/* BUTTONS */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: "12px",
+                  flexWrap: "wrap",
+                }}
+              >
+
+                {/* SUMMARY BUTTON */}
+                <button
+                  onClick={() => handleSummary(index)}
+                  style={{
+                    background: "#00d4ff",
+                    color: "black",
+                    border: "none",
+                    padding: "10px 16px",
+                    borderRadius: "8px",
+                    fontWeight: "bold",
+                    cursor: "pointer",
+                  }}
+                >
+                  {expandedCard === index
+                    ? "Hide Summary"
+                    : "AI Summary"}
+                </button>
+
+                {/* ARTICLE BUTTON */}
+                <button
+                  onClick={() => {
+
+                    if (articleLink) {
+                      window.open(
+                        articleLink,
+                        "_blank"
+                      );
+                    } else {
+                      alert(
+                        "Article link unavailable"
+                      );
+                    }
+
+                  }}
+                  style={{
+                    background: "#7c3aed",
+                    color: "white",
+                    border: "none",
+                    padding: "10px 16px",
+                    borderRadius: "8px",
+                    fontWeight: "bold",
+                    cursor: "pointer",
+                  }}
+                >
+                  Read Article
+                </button>
+
+              </div>
+
+              {/* SUMMARY BOX */}
+              {expandedCard === index && (
+
+                <div
+                  style={{
+                    marginTop: "20px",
+                    background: "#1f2937",
+                    padding: "18px",
+                    borderRadius: "12px",
+                    color: "#e5e7eb",
+                    lineHeight: "1.7",
+                  }}
+                >
+
+                  <h3
+                    style={{
+                      color: "#00d4ff",
+                      marginBottom: "12px",
+                    }}
+                  >
+                    AI Quick Summary
+                  </h3>
+
+                  <p>
+                    {summary}
+                  </p>
+
+                </div>
+
+              )}
+
+            </div>
+
+          </div>
+
+        );
+      })}
+
+    </div>
+
+  );
 }
-
-app.get("/api/news", async (req, res) => {
-
-  try {
-
-    const response = await axios.get(
-      "https://newsapi.org/v2/top-headlines",
-      {
-        params: {
-          country: "us",
-          category: "technology",
-          pageSize: 12,
-          apiKey: process.env.NEWS_API_KEY,
-        },
-      }
-    );
-
-    // Transform articles
-    const articles = response.data.articles.map((article) => ({
-
-      title: article.title,
-
-      description: article.description,
-
-      content: article.content,
-
-      url: article.url,
-
-      urlToImage: article.urlToImage,
-
-      publishedAt: article.publishedAt,
-
-      source: {
-        name: article.source?.name || "Tech News",
-      },
-
-      aiSummary: generateAISummary(article),
-    }));
-
-    res.json({ articles });
-
-  }
-
-  catch (error) {
-
-    console.error("News Fetch Error:", error.message);
-
-    res.status(500).json({
-      message: "Error fetching tech news",
-    });
-
-  }
-
-});
-
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-
-  console.log(`Server running on port ${PORT}`);
-
-});
