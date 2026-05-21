@@ -17,7 +17,6 @@ function App() {
 
       try {
 
-        // Backend API URL
         const res = await axios.get(
           'https://mern-news-appfinal.onrender.com/api/news'
         );
@@ -43,10 +42,10 @@ function App() {
 
     <div className="app-container">
 
-      {/* Main Content */}
+      {/* MAIN CONTENT */}
       <main className="main-content">
 
-        {/* Header */}
+        {/* HEADER */}
         <header
           className="glass-panel"
           style={{
@@ -79,7 +78,7 @@ function App() {
 
         </header>
 
-        {/* Live Updates */}
+        {/* LIVE NEWS */}
         <section className="glass-panel">
 
           <h2
@@ -112,7 +111,7 @@ function App() {
 
         </section>
 
-        {/* Charts */}
+        {/* CHARTS */}
         <section className="glass-panel">
 
           <h2 style={{ marginBottom: '1.5rem' }}>
@@ -128,57 +127,82 @@ function App() {
 
       </main>
 
-      {/* Side Panel */}
+      {/* SIDE PANEL */}
       <aside className="side-panel">
 
-        {/* Top Influences */}
-        <section
-          className="glass-panel"
-          style={{
-            cursor: "pointer"
-          }}
-          onClick={() =>
-            window.open(
-              "https://twitter.com/elonmusk",
-              "_blank",
-              "noopener,noreferrer"
-            )
-          }
-        >
+        {/* TOP INFLUENCES */}
+        <section className="glass-panel">
 
           <h3
             style={{
-              marginBottom: '1.5rem',
+              marginBottom: '1rem',
               color: 'var(--accent-cyan)'
             }}
           >
             Top Influences (Real-Time)
           </h3>
 
-          <p
+          <p style={{ color: '#ccc' }}>
+            Click below to explore
+          </p>
+
+          <div
             style={{
-              color: '#ccc',
-              marginBottom: '1rem'
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+              marginTop: '15px'
             }}
           >
-            Click to explore tech influencers
-          </p>
+
+            <button
+              onClick={() =>
+                window.open(
+                  'https://twitter.com/elonmusk',
+                  '_blank'
+                )
+              }
+              className="influence-btn"
+            >
+              Elon Musk
+            </button>
+
+            <button
+              onClick={() =>
+                window.open(
+                  'https://twitter.com/sama',
+                  '_blank'
+                )
+              }
+              className="influence-btn"
+            >
+              Sam Altman
+            </button>
+
+            <button
+              onClick={() =>
+                window.open(
+                  'https://twitter.com/sundarpichai',
+                  '_blank'
+                )
+              }
+              className="influence-btn"
+            >
+              Sundar Pichai
+            </button>
+
+          </div>
 
           <MarketSurvey />
 
         </section>
 
-        {/* Major Discoveries */}
-        <section
-          className="glass-panel"
-          style={{
-            cursor: "pointer"
-          }}
-        >
+        {/* MAJOR DISCOVERIES */}
+        <section className="glass-panel">
 
           <h3
             style={{
-              marginBottom: '1.5rem',
+              marginBottom: '1rem',
               color: 'var(--accent-purple)'
             }}
           >
@@ -188,23 +212,33 @@ function App() {
           <p
             style={{
               color: 'var(--text-secondary)',
-              fontSize: '0.9rem',
-              marginBottom: '1.5rem'
+              marginBottom: '1rem'
             }}
           >
             Within one month span
           </p>
 
-          {/* Clickable Timeline */}
-          <div
+          <button
             onClick={() =>
               window.open(
-                "https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqYUdJU0FtVnVLQUFQAQ",
-                "_blank",
-                "noopener,noreferrer"
+                'https://news.google.com/',
+                '_blank'
               )
             }
+            style={{
+              background: '#ff4fd8',
+              color: 'white',
+              border: 'none',
+              padding: '10px 15px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}
           >
+            Open Discoveries
+          </button>
+
+          <div style={{ marginTop: '1rem' }}>
             <DiscoveriesTimeline />
           </div>
 
@@ -213,6 +247,7 @@ function App() {
       </aside>
 
     </div>
+
   );
 }
 
