@@ -29,18 +29,30 @@ export default function NewsFeed({ articles, loading }) {
   return (
     <div className="news-grid">
       {articles.slice(0, 6).map((article, idx) => (
+
         <div
           key={idx}
           className="news-card"
           onClick={() => toggleExpand(idx)}
-          style={{ cursor: 'pointer' }}
+          style={{
+            cursor: 'pointer',
+            transition: '0.3s ease'
+          }}
         >
+
           {/* Article Image */}
           {(article.image || article.urlToImage) && (
             <img
               src={article.image || article.urlToImage}
               alt={article.title}
               className="news-card-image"
+              style={{
+                width: '100%',
+                height: '220px',
+                objectFit: 'cover',
+                borderTopLeftRadius: '16px',
+                borderTopRightRadius: '16px'
+              }}
             />
           )}
 
@@ -49,7 +61,7 @@ export default function NewsFeed({ articles, loading }) {
 
             {/* Source */}
             <div className="news-card-source">
-              {article.source?.name || 'Unknown Source'}
+              {article.source?.name || 'Indian Express'}
             </div>
 
             {/* Title */}
@@ -59,10 +71,11 @@ export default function NewsFeed({ articles, loading }) {
 
             {/* Meta */}
             <div className="news-card-meta">
+
               <span>
                 {article.publishedAt
                   ? new Date(article.publishedAt).toLocaleDateString()
-                  : 'No Date'}
+                  : 'Latest News'}
               </span>
 
               {expandedId === idx ? (
@@ -70,7 +83,9 @@ export default function NewsFeed({ articles, loading }) {
               ) : (
                 <ChevronDown size={16} />
               )}
+
             </div>
+
           </div>
 
           {/* Expandable Summary */}
@@ -78,13 +93,38 @@ export default function NewsFeed({ articles, loading }) {
             className={`news-summary-expand ${
               expandedId === idx ? 'active' : ''
             }`}
+            style={{
+              padding: expandedId === idx ? '1rem' : '0 1rem',
+              maxHeight: expandedId === idx ? '500px' : '0px',
+              overflow: 'hidden',
+              transition: 'all 0.3s ease'
+            }}
           >
-            <div className="summary-label">
-              <Cpu size={14} /> AI Quick Summary
+
+            {/* Summary Label */}
+            <div
+              className="summary-label"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                marginBottom: '1rem',
+                color: '#00d4ff',
+                fontWeight: 'bold'
+              }}
+            >
+              <Cpu size={14} />
+              AI Quick Summary
             </div>
 
             {/* Summary */}
-            <p className="summary-text">
+            <p
+              className="summary-text"
+              style={{
+                color: '#d1d5db',
+                lineHeight: '1.6'
+              }}
+            >
               {article.description ||
                 article.content ||
                 'No summary available for this article.'}
@@ -96,31 +136,39 @@ export default function NewsFeed({ articles, loading }) {
                 e.stopPropagation();
 
                 const link =
-                  article.url ||
                   article.link ||
+                  article.url ||
                   article.sourceUrl;
 
                 if (link) {
-                  window.open(link, '_blank');
+                  window.open(
+                    link,
+                    '_blank',
+                    'noopener,noreferrer'
+                  );
                 } else {
                   alert('Article link not available');
                 }
               }}
               style={{
-                marginTop: '10px',
+                marginTop: '16px',
                 background: '#00d4ff',
-                color: 'black',
+                color: '#000',
                 border: 'none',
-                padding: '8px 12px',
-                borderRadius: '6px',
+                padding: '10px 16px',
+                borderRadius: '8px',
                 cursor: 'pointer',
                 fontWeight: 'bold',
+                fontSize: '14px'
               }}
             >
               Read Full Article
             </button>
+
           </div>
+
         </div>
+
       ))}
     </div>
   );
