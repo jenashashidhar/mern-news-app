@@ -1,161 +1,193 @@
 import React, { useState } from 'react';
-import { Cpu, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function NewsFeed({ articles, loading }) {
-  const [expandedId, setExpandedId] = useState(null);
 
-  const toggleExpand = (index) => {
-    setExpandedId(expandedId === index ? null : index);
+  const [openIndex, setOpenIndex] = useState(null);
+
+  const toggleSummary = (index) => {
+    setOpenIndex(openIndex === index ? null : index);
   };
 
-  // Loading state
   if (loading) {
-    return (
-      <div style={{ color: 'var(--text-secondary)' }}>
-        Fusing data streams...
-      </div>
-    );
+    return <p style={{ color: 'white' }}>Loading news...</p>;
   }
 
-  // No articles
   if (!articles || articles.length === 0) {
-    return (
-      <div style={{ color: 'var(--text-secondary)' }}>
-        No articles found.
-      </div>
-    );
+    return <p style={{ color: 'white' }}>No articles found.</p>;
   }
 
   return (
-    <div className="news-grid">
-      {articles.slice(0, 6).map((article, idx) => {
 
-        const articleLink =
-          article.url ||
-          article.link ||
-          article.sourceUrl ||
-          article.href;
+    <div
+      style={{
+        display: 'grid',
+        gap: '20px'
+      }}
+    >
 
-        return (
-          <div
-            key={idx}
-            className="news-card"
-            onClick={() => toggleExpand(idx)}
-            style={{ cursor: 'pointer' }}
-          >
+      {articles.slice(0, 6).map((article, index) => (
 
-            {/* Image */}
-            {(article.image || article.urlToImage) && (
-              <img
-                src={article.image || article.urlToImage}
-                alt={article.title}
-                className="news-card-image"
+        <div
+          key={index}
+          style={{
+            background: '#111827',
+            borderRadius: '16px',
+            overflow: 'hidden',
+            border: '1px solid #333'
+          }}
+        >
+
+          {/* IMAGE */}
+          {(article.image || article.urlToImage) && (
+
+            <img
+              src={article.image || article.urlToImage}
+              alt={article.title}
+              style={{
+                width: '100%',
+                height: '220px',
+                objectFit: 'cover'
+              }}
+            />
+
+          )}
+
+          {/* CONTENT */}
+          <div style={{ padding: '16px' }}>
+
+            {/* SOURCE */}
+            <p
+              style={{
+                color: '#00d4ff',
+                fontSize: '14px',
+                marginBottom: '10px',
+                fontWeight: 'bold'
+              }}
+            >
+              {article.source?.name || 'Tech News'}
+            </p>
+
+            {/* TITLE */}
+            <h2
+              style={{
+                color: 'white',
+                fontSize: '20px',
+                marginBottom: '12px'
+              }}
+            >
+              {article.title}
+            </h2>
+
+            {/* DATE */}
+            <p
+              style={{
+                color: '#9ca3af',
+                marginBottom: '15px'
+              }}
+            >
+              {article.publishedAt
+                ? new Date(article.publishedAt).toLocaleDateString()
+                : 'Latest'}
+            </p>
+
+            {/* BUTTONS */}
+            <div
+              style={{
+                display: 'flex',
+                gap: '10px',
+                flexWrap: 'wrap'
+              }}
+            >
+
+              {/* SUMMARY BUTTON */}
+              <button
+                onClick={() => toggleSummary(index)}
                 style={{
-                  width: '100%',
-                  height: '200px',
-                  objectFit: 'cover',
-                  borderRadius: '10px'
+                  background: '#00d4ff',
+                  color: 'black',
+                  border: 'none',
+                  padding: '10px 15px',
+                  borderRadius: '8px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
                 }}
-              />
-            )}
+              >
+                {openIndex === index
+                  ? 'Hide Summary'
+                  : 'AI Summary'}
+              </button>
 
-            {/* Content */}
-            <div className="news-card-content">
+              {/* READ ARTICLE */}
+              <button
+                onClick={() => {
 
-              {/* Source */}
-              <div className="news-card-source">
-                {article.source?.name || 'Indian Express'}
-              </div>
+                  const link =
+                    article.url ||
+                    article.link ||
+                    article.sourceUrl;
 
-              {/* Title */}
-              <h3 className="news-card-title">
-                {article.title || 'No Title'}
-              </h3>
+                  if (link) {
+                    window.open(link, '_blank');
+                  } else {
+                    alert('Article link not available');
+                  }
 
-              {/* Date */}
-              <div className="news-card-meta">
-                <span>
-                  {article.publishedAt
-                    ? new Date(article.publishedAt).toLocaleDateString()
-                    : 'No Date'}
-                </span>
+                }}
+                style={{
+                  background: '#7c3aed',
+                  color: 'white',
+                  border: 'none',
+                  padding: '10px 15px',
+                  borderRadius: '8px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                Read Article
+              </button>
 
-                {expandedId === idx ? (
-                  <ChevronUp size={16} />
-                ) : (
-                  <ChevronDown size={16} />
-                )}
-              </div>
             </div>
 
-            {/* Expanded Section */}
-            {expandedId === idx && (
+            {/* SUMMARY BOX */}
+            {openIndex === index && (
+
               <div
                 style={{
-                  marginTop: '15px',
-                  padding: '15px',
-                  background: '#111827',
+                  marginTop: '18px',
+                  background: '#1f2937',
+                  padding: '16px',
                   borderRadius: '10px',
+                  color: '#e5e7eb',
+                  lineHeight: '1.7'
                 }}
               >
 
-                <div
+                <h4
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    marginBottom: '10px',
                     color: '#00d4ff',
-                    fontWeight: 'bold'
+                    marginBottom: '10px'
                   }}
                 >
-                  <Cpu size={14} />
                   AI Quick Summary
-                </div>
+                </h4>
 
-                <p
-                  style={{
-                    color: '#d1d5db',
-                    lineHeight: '1.6'
-                  }}
-                >
+                <p>
                   {article.description ||
                     article.content ||
-                    'No summary available for this article.'}
+                    'No summary available.'}
                 </p>
 
-                {/* Button */}
-                {articleLink ? (
-                  <a
-                    href={articleLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    style={{
-                      display: 'inline-block',
-                      marginTop: '15px',
-                      background: '#00d4ff',
-                      color: 'black',
-                      padding: '10px 14px',
-                      borderRadius: '8px',
-                      textDecoration: 'none',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    Read Full Article
-                  </a>
-                ) : (
-                  <p style={{ color: 'red', marginTop: '10px' }}>
-                    Article link not available
-                  </p>
-                )}
-
               </div>
+
             )}
 
           </div>
-        );
-      })}
+
+        </div>
+
+      ))}
+
     </div>
+
   );
 }
