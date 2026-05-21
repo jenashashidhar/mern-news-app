@@ -1,109 +1,208 @@
-const express = require("express");
-const axios = require("axios");
-const cors = require("cors");
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
-const app = express();
+export default function NewsFeed() {
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-app.use(cors());
+  const API_KEY = "7e1b48a2f0a348cf97c75ba2ecf6f6ea";
 
-app.get("/api/news", async (req, res) => {
+  useEffect(() => {
+    fetchNews();
+  }, []);
 
-  try {
+  const fetchNews = async () => {
+    try {
+      const response = await axios.get(
+        `https://newsapi.org/v2/top-headlines?country=us&category=technology&pageSize=20&apiKey=${API_KEY}`
+      );
 
-    const response = await axios.get(
-      "https://newsapi.org/v2/top-headlines",
-      {
-        params: {
-          country: "us",
-          category: "technology",
-          pageSize: 12,
+      const news = response.data.articles.map((article) => ({
+        ...article,
+        summary: generateSummary(article),
+      }));
 
-          // PUT YOUR NEWS API KEY HERE
-          apiKey: "YOUR_NEWS_API_KEY",
-        },
-      }
-    );
+      setArticles(news);
+      setLoading(false);
+    } catch (error) {
+      console.log("Error fetching news:", error);
+      setLoading(false);
+    }
+  };
 
-    const articles = response.data.articles.map((article) => {
+  const generateSummary = (article) => {
+    const text =
+      article.description ||
+      article.content ||
+      "No summary available.";
 
-      // Better AI-style summary generation
+    return text.length > 180
+      ? text.substring(0, 180) + "..."
+      : text;
+  };
 
-      let aiSummary = "";
+  return (
+    <div style={styles.container}>
+      <h1 style={styles.heading}>
+        🚀 Tech Discoveries News Feed
+      </h1>
 
-      if (article.description && article.content) {
+      {loading ? (
+        <div style={styles.loaderContainer}>
+          <div style={styles.loader}></div>
+          <h2 style={styles.loadingText}>Loading Latest News...</h2>
+        </div>
+      ) : (
+        <div style={styles.grid}>
+          {articles.map((article, index) => (
+            <div key={index} style={styles.card}>
+              <img
+                src={
+                  article.urlToImage ||
+                  "https://via.placeholder.com/400x220"
+                }
+                alt="news"
+                style={styles.image}
+              />
 
-        aiSummary =
-          `${article.description}
+              <div style={styles.content}>
+                <div style={styles.sourceBox}>
+                  {article.source?.name}
+                </div>
 
-This technology update highlights important developments in the tech industry. ${article.content.replace(/\[\+\d+ chars\]/, "")}`;
+                <h2 style={styles.title}>
+                  {article.title}
+                </h2>
 
-      }
+                <p style={styles.summary}>
+                  {article.summary}
+                </p>
 
-      else if (article.description) {
+                <div style={styles.footer}>
+                  <button
+                    style={styles.button}
+                    onClick={() =>
+                      window.open(article.url, "_blank")
+                    }
+                  >
+                    Read Full Article →
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
-        aiSummary =
-          `${article.description}
+const styles = {
+  container: {
+    minHeight: "100vh",
+    background:
+      "linear-gradient(to right, #020617, #0f172a, #1e293b)",
+    padding: "30px",
+    fontFamily: "Arial, sans-serif",
+  },
 
-Experts believe this news could influence future technology trends and innovation worldwide.`;
+  heading: {
+    textAlign: "center",
+    color: "white",
+    fontSize: "48px",
+    marginBottom: "40px",
+    fontWeight: "bold",
+    textShadow: "0px 0px 10px rgba(56,189,248,0.8)",
+  },
 
-      }
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit,minmax(340px,1fr))",
+    gap: "30px",
+  },
 
-      else if (article.content) {
+  card: {
+    background: "#111827",
+    borderRadius: "22px",
+    overflow: "hidden",
+    boxShadow: "0 0 20px rgba(0,0,0,0.5)",
+    transition: "0.3s ease",
+    border: "1px solid rgba(255,255,255,0.08)",
+  },
 
-        aiSummary =
-          article.content.replace(/\[\+\d+ chars\]/, "");
+  image: {
+    width: "100%",
+    height: "240px",
+    objectFit: "cover",
+  },
 
-      }
+  content: {
+    padding: "22px",
+  },
 
-      else {
+  sourceBox: {
+    display: "inline-block",
+    background: "#38bdf8",
+    color: "white",
+    padding: "6px 14px",
+    borderRadius: "20px",
+    fontSize: "13px",
+    marginBottom: "14px",
+    fontWeight: "bold",
+  },
 
-        aiSummary =
-          `This article discusses recent breakthroughs and updates in the technology sector involving ${article.title}.`;
+  title: {
+    color: "white",
+    fontSize: "24px",
+    marginBottom: "16px",
+    lineHeight: "1.4",
+  },
 
-      }
+  summary: {
+    color: "#cbd5e1",
+    fontSize: "16px",
+    lineHeight: "1.7",
+    marginBottom: "25px",
+  },
 
-      return {
+  footer: {
+    display: "flex",
+    justifyContent: "center",
+  },
 
-        title: article.title,
+  button: {
+    background:
+      "linear-gradient(to right, #0ea5e9, #38bdf8)",
+    color: "white",
+    border: "none",
+    padding: "14px 22px",
+    borderRadius: "12px",
+    fontSize: "15px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    width: "100%",
+    transition: "0.3s",
+  },
 
-        description: article.description,
+  loaderContainer: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    marginTop: "120px",
+  },
 
-        content: article.content,
+  loader: {
+    width: "70px",
+    height: "70px",
+    border: "7px solid #334155",
+    borderTop: "7px solid #38bdf8",
+    borderRadius: "50%",
+    animation: "spin 1s linear infinite",
+  },
 
-        url: article.url,
-
-        urlToImage: article.urlToImage,
-
-        publishedAt: article.publishedAt,
-
-        source: {
-          name: article.source?.name || "Tech News",
-        },
-
-        aiSummary,
-      };
-    });
-
-    res.json({ articles });
-
-  }
-
-  catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      message: "Error fetching tech news",
-    });
-
-  }
-
-});
-
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-
-  console.log(`Server running on port ${PORT}`);
-
-});
+  loadingText: {
+    color: "white",
+    marginTop: "20px",
+    fontSize: "24px",
+  },
+};
