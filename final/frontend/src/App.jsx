@@ -134,15 +134,16 @@ function App() {
         {/* Top Influences */}
         <section
           className="glass-panel"
-          onClick={() =>
-            window.open(
-              "https://twitter.com/elonmusk",
-              "_blank"
-            )
-          }
           style={{
             cursor: "pointer"
           }}
+          onClick={() =>
+            window.open(
+              "https://twitter.com/elonmusk",
+              "_blank",
+              "noopener,noreferrer"
+            )
+          }
         >
 
           <h3
@@ -167,15 +168,9 @@ function App() {
 
         </section>
 
-        {/* Discoveries */}
+        {/* Major Discoveries */}
         <section
           className="glass-panel"
-          onClick={() =>
-            window.open(
-              "https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqYUdJU0FtVnVLQUFQAQ",
-              "_blank"
-            )
-          }
           style={{
             cursor: "pointer"
           }}
@@ -200,7 +195,18 @@ function App() {
             Within one month span
           </p>
 
-          <DiscoveriesTimeline />
+          {/* Clickable Timeline */}
+          <div
+            onClick={() =>
+              window.open(
+                "https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqYUdJU0FtVnVLQUFQAQ",
+                "_blank",
+                "noopener,noreferrer"
+              )
+            }
+          >
+            <DiscoveriesTimeline />
+          </div>
 
         </section>
 
