@@ -1,208 +1,145 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+const express = require("express");
+const axios = require("axios");
+const cors = require("cors");
 
-export default function NewsFeed() {
-  const [articles, setArticles] = useState([]);
-  const [loading, setLoading] = useState(true);
+const app = express();
 
-  const API_KEY = "7e1b48a2f0a348cf97c75ba2ecf6f6ea";
+app.use(cors());
 
-  useEffect(() => {
-    fetchNews();
-  }, []);
-
-  const fetchNews = async () => {
-    try {
-      const response = await axios.get(
-        `https://newsapi.org/v2/top-headlines?country=us&category=technology&pageSize=20&apiKey=${API_KEY}`
-      );
-
-      const news = response.data.articles.map((article) => ({
-        ...article,
-        summary: generateSummary(article),
-      }));
-
-      setArticles(news);
-      setLoading(false);
-    } catch (error) {
-      console.log("Error fetching news:", error);
-      setLoading(false);
-    }
-  };
-
-  const generateSummary = (article) => {
-    const text =
-      article.description ||
-      article.content ||
-      "No summary available.";
-
-    return text.length > 180
-      ? text.substring(0, 180) + "..."
-      : text;
-  };
-
-  return (
-    <div style={styles.container}>
-      <h1 style={styles.heading}>
-        🚀 Tech Discoveries News Feed
-      </h1>
-
-      {loading ? (
-        <div style={styles.loaderContainer}>
-          <div style={styles.loader}></div>
-          <h2 style={styles.loadingText}>Loading Latest News...</h2>
-        </div>
-      ) : (
-        <div style={styles.grid}>
-          {articles.map((article, index) => (
-            <div key={index} style={styles.card}>
-              <img
-                src={
-                  article.urlToImage ||
-                  "https://via.placeholder.com/400x220"
-                }
-                alt="news"
-                style={styles.image}
-              />
-
-              <div style={styles.content}>
-                <div style={styles.sourceBox}>
-                  {article.source?.name}
-                </div>
-
-                <h2 style={styles.title}>
-                  {article.title}
-                </h2>
-
-                <p style={styles.summary}>
-                  {article.summary}
-                </p>
-
-                <div style={styles.footer}>
-                  <button
-                    style={styles.button}
-                    onClick={() =>
-                      window.open(article.url, "_blank")
-                    }
-                  >
-                    Read Full Article →
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+/**
+ * Clean article text
+ */
+function cleanText(text = "") {
+  return text
+    .replace(/\[\+\d+\schars\]/g, "")
+    .replace(/<[^>]*>/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-const styles = {
-  container: {
-    minHeight: "100vh",
-    background:
-      "linear-gradient(to right, #020617, #0f172a, #1e293b)",
-    padding: "30px",
-    fontFamily: "Arial, sans-serif",
-  },
+/**
+ * AI-style summary generator
+ */
+function generateAISummary(article) {
 
-  heading: {
-    textAlign: "center",
-    color: "white",
-    fontSize: "48px",
-    marginBottom: "40px",
-    fontWeight: "bold",
-    textShadow: "0px 0px 10px rgba(56,189,248,0.8)",
-  },
+  const title = cleanText(article.title);
+  const description = cleanText(article.description);
+  const content = cleanText(article.content);
 
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit,minmax(340px,1fr))",
-    gap: "30px",
-  },
+  // Combine article text
+  const fullText = `${description} ${content}`;
 
-  card: {
-    background: "#111827",
-    borderRadius: "22px",
-    overflow: "hidden",
-    boxShadow: "0 0 20px rgba(0,0,0,0.5)",
-    transition: "0.3s ease",
-    border: "1px solid rgba(255,255,255,0.08)",
-  },
+  // Split into sentences
+  const sentences = fullText
+    .split(/[.!?]/)
+    .map(sentence => sentence.trim())
+    .filter(sentence => sentence.length > 25);
 
-  image: {
-    width: "100%",
-    height: "240px",
-    objectFit: "cover",
-  },
+  // Remove duplicate sentences
+  const uniqueSentences = [...new Set(sentences)];
 
-  content: {
-    padding: "22px",
-  },
+  // Pick best sentences
+  let selected = [];
 
-  sourceBox: {
-    display: "inline-block",
-    background: "#38bdf8",
-    color: "white",
-    padding: "6px 14px",
-    borderRadius: "20px",
-    fontSize: "13px",
-    marginBottom: "14px",
-    fontWeight: "bold",
-  },
+  // First prefer description
+  if (description) {
+    selected.push(description);
+  }
 
-  title: {
-    color: "white",
-    fontSize: "24px",
-    marginBottom: "16px",
-    lineHeight: "1.4",
-  },
+  // Add useful content sentences
+  for (let sentence of uniqueSentences) {
 
-  summary: {
-    color: "#cbd5e1",
-    fontSize: "16px",
-    lineHeight: "1.7",
-    marginBottom: "25px",
-  },
+    // Avoid repeating description
+    if (
+      !selected.includes(sentence) &&
+      sentence.length > 40
+    ) {
+      selected.push(sentence);
+    }
 
-  footer: {
-    display: "flex",
-    justifyContent: "center",
-  },
+    // Limit summary length
+    if (selected.length >= 3) break;
+  }
 
-  button: {
-    background:
-      "linear-gradient(to right, #0ea5e9, #38bdf8)",
-    color: "white",
-    border: "none",
-    padding: "14px 22px",
-    borderRadius: "12px",
-    fontSize: "15px",
-    fontWeight: "bold",
-    cursor: "pointer",
-    width: "100%",
-    transition: "0.3s",
-  },
+  // Smart fallback
+  if (selected.length === 0) {
+    selected.push(
+      `This article discusses recent technology updates involving ${title}.`
+    );
+  }
 
-  loaderContainer: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    marginTop: "120px",
-  },
+  // Add AI-style ending
+  const endings = [
+    "This development could influence future technology trends.",
+    "Experts are closely monitoring the impact of this update.",
+    "The story highlights rapid innovation in the tech industry.",
+    "This news reflects ongoing changes in digital technology."
+  ];
 
-  loader: {
-    width: "70px",
-    height: "70px",
-    border: "7px solid #334155",
-    borderTop: "7px solid #38bdf8",
-    borderRadius: "50%",
-    animation: "spin 1s linear infinite",
-  },
+  const randomEnding =
+    endings[Math.floor(Math.random() * endings.length)];
 
-  loadingText: {
-    color: "white",
-    marginTop: "20px",
-    fontSize: "24px",
-  },
-};
+  return `${selected.join(". ")}. ${randomEnding}`;
+}
+
+app.get("/api/news", async (req, res) => {
+
+  try {
+
+    const response = await axios.get(
+      "https://newsapi.org/v2/top-headlines",
+      {
+        params: {
+          country: "us",
+          category: "technology",
+          pageSize: 12,
+          apiKey: process.env.NEWS_API_KEY,
+        },
+      }
+    );
+
+    // Transform articles
+    const articles = response.data.articles.map((article) => ({
+
+      title: article.title,
+
+      description: article.description,
+
+      content: article.content,
+
+      url: article.url,
+
+      urlToImage: article.urlToImage,
+
+      publishedAt: article.publishedAt,
+
+      source: {
+        name: article.source?.name || "Tech News",
+      },
+
+      aiSummary: generateAISummary(article),
+    }));
+
+    res.json({ articles });
+
+  }
+
+  catch (error) {
+
+    console.error("News Fetch Error:", error.message);
+
+    res.status(500).json({
+      message: "Error fetching tech news",
+    });
+
+  }
+
+});
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+
+  console.log(`Server running on port ${PORT}`);
+
+});
