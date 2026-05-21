@@ -17,6 +17,7 @@ function App() {
 
       try {
 
+        // YOUR RENDER BACKEND URL
         const res = await axios.get(
           'https://mern-news-appfinal.onrender.com/api/news'
         );
@@ -78,7 +79,7 @@ function App() {
 
         </header>
 
-        {/* LIVE NEWS */}
+        {/* LIVE UPDATES */}
         <section className="glass-panel">
 
           <h2
@@ -143,7 +144,7 @@ function App() {
           </h3>
 
           <p style={{ color: '#ccc' }}>
-            Click below to explore
+            Click below to explore tech influencers
           </p>
 
           <div
@@ -155,6 +156,7 @@ function App() {
             }}
           >
 
+            {/* ELON */}
             <button
               onClick={() =>
                 window.open(
@@ -162,11 +164,20 @@ function App() {
                   '_blank'
                 )
               }
-              className="influence-btn"
+              style={{
+                background: '#00d4ff',
+                border: 'none',
+                padding: '10px',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                color: 'black'
+              }}
             >
               Elon Musk
             </button>
 
+            {/* SAM */}
             <button
               onClick={() =>
                 window.open(
@@ -174,11 +185,20 @@ function App() {
                   '_blank'
                 )
               }
-              className="influence-btn"
+              style={{
+                background: '#00d4ff',
+                border: 'none',
+                padding: '10px',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                color: 'black'
+              }}
             >
               Sam Altman
             </button>
 
+            {/* SUNDAR */}
             <button
               onClick={() =>
                 window.open(
@@ -186,18 +206,28 @@ function App() {
                   '_blank'
                 )
               }
-              className="influence-btn"
+              style={{
+                background: '#00d4ff',
+                border: 'none',
+                padding: '10px',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                color: 'black'
+              }}
             >
               Sundar Pichai
             </button>
 
           </div>
 
-          <MarketSurvey />
+          <div style={{ marginTop: '1rem' }}>
+            <MarketSurvey />
+          </div>
 
         </section>
 
-        {/* MAJOR DISCOVERIES */}
+        {/* MAJOR TECH DISCOVERIES */}
         <section className="glass-panel">
 
           <h3
@@ -206,7 +236,7 @@ function App() {
               color: 'var(--accent-purple)'
             }}
           >
-            Major Discoveries
+            Major Tech Discoveries
           </h3>
 
           <p
@@ -215,28 +245,81 @@ function App() {
               marginBottom: '1rem'
             }}
           >
-            Within one month span
+            Latest breakthroughs in AI and technology
           </p>
 
-          <button
-            onClick={() =>
-              window.open(
-                'https://news.google.com/',
-                '_blank'
-              )
-            }
+          <div
             style={{
-              background: '#ff4fd8',
-              color: 'white',
-              border: 'none',
-              padding: '10px 15px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: 'bold'
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px'
             }}
           >
-            Open Discoveries
-          </button>
+
+            {/* OPENAI */}
+            <button
+              onClick={() =>
+                window.open(
+                  'https://openai.com/news/',
+                  '_blank'
+                )
+              }
+              style={{
+                background: '#7c3aed',
+                color: 'white',
+                border: 'none',
+                padding: '10px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              OpenAI Discoveries
+            </button>
+
+            {/* GOOGLE */}
+            <button
+              onClick={() =>
+                window.open(
+                  'https://blog.google/technology/ai/',
+                  '_blank'
+                )
+              }
+              style={{
+                background: '#2563eb',
+                color: 'white',
+                border: 'none',
+                padding: '10px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              Google AI Updates
+            </button>
+
+            {/* TECHCRUNCH */}
+            <button
+              onClick={() =>
+                window.open(
+                  'https://techcrunch.com/category/artificial-intelligence/',
+                  '_blank'
+                )
+              }
+              style={{
+                background: '#059669',
+                color: 'white',
+                border: 'none',
+                padding: '10px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              AI & Startup News
+            </button>
+
+          </div>
 
           <div style={{ marginTop: '1rem' }}>
             <DiscoveriesTimeline />
