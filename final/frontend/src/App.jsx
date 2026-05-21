@@ -7,14 +7,17 @@ import DiscoveriesTimeline from './components/DiscoveriesTimeline';
 import { Activity } from 'lucide-react';
 
 function App() {
+
   const [articles, setArticles] = useState([]);
   const [newsLoading, setNewsLoading] = useState(true);
 
   useEffect(() => {
+
     const fetchNews = async () => {
+
       try {
 
-        // Render backend URL
+        // Backend API URL
         const res = await axios.get(
           'https://mern-news-appfinal.onrender.com/api/news'
         );
@@ -22,16 +25,22 @@ function App() {
         setArticles(res.data.articles || []);
 
       } catch (error) {
+
         console.error("Error fetching news:", error);
+
       } finally {
+
         setNewsLoading(false);
+
       }
     };
 
     fetchNews();
+
   }, []);
 
   return (
+
     <div className="app-container">
 
       {/* Main Content */}
@@ -46,11 +55,16 @@ function App() {
             gap: '1rem'
           }}
         >
-          <Activity size={32} color="var(--accent-cyan)" />
+
+          <Activity
+            size={32}
+            color="var(--accent-cyan)"
+          />
 
           <div>
+
             <div className="header-subtitle">
-              Real-Time Data
+              REAL-TIME DATA
             </div>
 
             <h1 className="header-title">
@@ -60,7 +74,9 @@ function App() {
             <p style={{ color: 'var(--text-secondary)' }}>
               Live technology news fetching from Indian Express
             </p>
+
           </div>
+
         </header>
 
         {/* Live Updates */}
@@ -74,6 +90,7 @@ function App() {
               gap: '0.5rem'
             }}
           >
+
             <span
               style={{
                 width: '8px',
@@ -85,6 +102,7 @@ function App() {
             ></span>
 
             Live Updates
+
           </h2>
 
           <NewsFeed
@@ -113,7 +131,19 @@ function App() {
       {/* Side Panel */}
       <aside className="side-panel">
 
-        <section className="glass-panel">
+        {/* Top Influences */}
+        <section
+          className="glass-panel"
+          onClick={() =>
+            window.open(
+              "https://twitter.com/elonmusk",
+              "_blank"
+            )
+          }
+          style={{
+            cursor: "pointer"
+          }}
+        >
 
           <h3
             style={{
@@ -124,11 +154,32 @@ function App() {
             Top Influences (Real-Time)
           </h3>
 
+          <p
+            style={{
+              color: '#ccc',
+              marginBottom: '1rem'
+            }}
+          >
+            Click to explore tech influencers
+          </p>
+
           <MarketSurvey />
 
         </section>
 
-        <section className="glass-panel">
+        {/* Discoveries */}
+        <section
+          className="glass-panel"
+          onClick={() =>
+            window.open(
+              "https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqYUdJU0FtVnVLQUFQAQ",
+              "_blank"
+            )
+          }
+          style={{
+            cursor: "pointer"
+          }}
+        >
 
           <h3
             style={{
