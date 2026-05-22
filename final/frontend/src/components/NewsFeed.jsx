@@ -1,15 +1,13 @@
-```jsx
 // NewsFeed.jsx
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import {
-  Heart,
   Bookmark,
   BookmarkCheck,
-  MessageCircle,
-  ExternalLink,
+  Download,
   Clock3,
+  ExternalLink,
 } from "lucide-react";
 
 const API_KEY = "7e1b48a2f0a348cf97c75ba2ecf6f6ea";
@@ -17,43 +15,44 @@ const API_KEY = "7e1b48a2f0a348cf97c75ba2ecf6f6ea";
 export default function NewsFeed() {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [bookmarks, setBookmarks] = useState([]);
 
-  const [likedArticles, setLikedArticles] = useState(
-    JSON.parse(localStorage.getItem("likedArticles")) || []
-  );
+  // Load bookmarks
+  useEffect(() => {
+    const savedBookmarks =
+      JSON.parse(localStorage.getItem("bookmarks")) || [];
 
-  const [bookmarks, setBookmarks] = useState(
-    JSON.parse(localStorage.getItem("bookmarks")) || []
-  );
+    setBookmarks(savedBookmarks);
+  }, []);
 
-  const [comments, setComments] = useState({});
-  const [expandedSummary, setExpandedSummary] = useState(null);
-
+  // Fetch News
   useEffect(() => {
     fetchNews();
   }, []);
 
-  // FETCH NEWS
   const fetchNews = async () => {
     try {
       setLoading(true);
 
-      // Random page for fresh articles
       const randomPage = Math.floor(Math.random() * 10) + 1;
 
-      // Prevent caching
       const timestamp = new Date().getTime();
 
-      // QUERY
-      const query =
-        "technology OR AI OR gadgets OR cybersecurity OR startups OR robotics OR blockchain";
+      const query = "technology";
 
-      // API CALL
-      const response = await axios.get(
-        `https://newsapi.org/v2/everything?q=${encodeURIComponent(
-          query
-        )}&domains=indianexpress.com&language=en&sortBy=publishedAt&pageSize=50&page=${randomPage}&apiKey=${API_KEY}&t=${timestamp}`
-      );
+      const encodedQuery = encodeURIComponent(query);
+
+      const url =
+        `https://newsapi.org/v2/everything?q=${encodedQuery}` +
+        `&domains=indianexpress.com` +
+        `&language=en` +
+        `&sortBy=publishedAt` +
+        `&pageSize=40` +
+        `&page=${randomPage}` +
+        `&apiKey=${API_KEY}` +
+        `&t=${timestamp}`;
+
+      const response = await axios.get(url);
 
       const formattedArticles = response.data.articles.map(
         (article, index) => ({
@@ -65,35 +64,22 @@ export default function NewsFeed() {
             article.urlToImage ||
             "https://images.unsplash.com/photo-1518770660439-4636190af475",
 
-          // Direct Indian Express link
           url: article.url,
 
           source: article.source.name,
 
-          publishedAt: new Date(
-            article.publishedAt
-          ).toLocaleDateString(),
-
-          // AI-like summary
-          summary: generateAISummary(
-            article.title,
+          summary: generateSummary(
             article.description,
             article.content
           ),
 
-          // Reading time
           readingTime: calculateReadingTime(
             article.content || article.description || ""
           ),
         })
       );
 
-      // Shuffle articles
-      const shuffled = formattedArticles.sort(
-        () => Math.random() - 0.5
-      );
-
-      setArticles(shuffled);
+      setArticles(formattedArticles);
 
       setLoading(false);
     } catch (error) {
@@ -102,37 +88,21 @@ export default function NewsFeed() {
     }
   };
 
-  // AI SUMMARY
-  const generateAISummary = (
-    title,
-    description,
-    content
-  ) => {
-    const text = `
-      ${title || ""}
-      ${description || ""}
-      ${content || ""}
-    `;
+  // Small Summary
+  const generateSummary = (description, content) => {
+    const text = `${description || ""} ${content || ""}`;
 
     if (!text) {
-      return "No detailed summary available.";
+      return "No summary available.";
     }
 
-    const words = text.split(" ");
-
-    const shortSummary = words
-      .slice(0, 45)
-      .join(" ");
-
-    return `
-${shortSummary}...
-
-Key Takeaway:
-This update highlights important developments in technology, innovation, startups, and the digital ecosystem.
-    `;
+    return (
+      text.split(" ").slice(0, 35).join(" ") +
+      "... Read full article for more details."
+    );
   };
 
-  // READING TIME
+  // Reading Time
   const calculateReadingTime = (text) => {
     const words = text.split(" ").length;
 
@@ -141,31 +111,7 @@ This update highlights important developments in technology, innovation, startup
     return `${minutes} min read`;
   };
 
-  // LIKE
-  const toggleLike = (article) => {
-    const exists = likedArticles.find(
-      (item) => item.url === article.url
-    );
-
-    let updatedLikes;
-
-    if (exists) {
-      updatedLikes = likedArticles.filter(
-        (item) => item.url !== article.url
-      );
-    } else {
-      updatedLikes = [...likedArticles, article];
-    }
-
-    setLikedArticles(updatedLikes);
-
-    localStorage.setItem(
-      "likedArticles",
-      JSON.stringify(updatedLikes)
-    );
-  };
-
-  // BOOKMARK
+  // Bookmark
   const toggleBookmark = (article) => {
     const exists = bookmarks.find(
       (item) => item.url === article.url
@@ -189,14 +135,36 @@ This update highlights important developments in technology, innovation, startup
     );
   };
 
-  // COMMENTS
-  const handleComment = (articleId, text) => {
-    setComments({
-      ...comments,
-      [articleId]: text,
+  // Download Summary
+  const downloadSummary = (article) => {
+    const content = `
+Title: ${article.title}
+
+Summary:
+${article.summary}
+
+Read Full:
+${article.url}
+    `;
+
+    const blob = new Blob([content], {
+      type: "text/plain",
     });
+
+    const link = document.createElement("a");
+
+    link.href = URL.createObjectURL(blob);
+
+    link.download = `${article.title}.txt`;
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
   };
 
+  // Loading State
   if (loading) {
     return (
       <div
@@ -211,7 +179,7 @@ This update highlights important developments in technology, innovation, startup
           fontWeight: "bold",
         }}
       >
-        Loading Latest Tech News...
+        Loading Tech News...
       </div>
     );
   }
@@ -228,11 +196,11 @@ This update highlights important developments in technology, innovation, startup
         style={{
           color: "white",
           textAlign: "center",
-          fontSize: "42px",
           marginBottom: "40px",
+          fontSize: "42px",
         }}
       >
-        Indian Express Tech News
+        Tech News Articles
       </h1>
 
       {/* ARTICLES */}
@@ -240,15 +208,11 @@ This update highlights important developments in technology, innovation, startup
         style={{
           display: "grid",
           gridTemplateColumns:
-            "repeat(auto-fit,minmax(350px,1fr))",
+            "repeat(auto-fit,minmax(340px,1fr))",
           gap: "25px",
         }}
       >
         {articles.map((article) => {
-          const liked = likedArticles.find(
-            (item) => item.url === article.url
-          );
-
           const bookmarked = bookmarks.find(
             (item) => item.url === article.url
           );
@@ -261,7 +225,7 @@ This update highlights important developments in technology, innovation, startup
                 borderRadius: "20px",
                 overflow: "hidden",
                 boxShadow:
-                  "0px 8px 30px rgba(0,0,0,0.4)",
+                  "0px 8px 25px rgba(0,0,0,0.4)",
               }}
             >
               {/* IMAGE */}
@@ -270,27 +234,17 @@ This update highlights important developments in technology, innovation, startup
                 alt="news"
                 style={{
                   width: "100%",
-                  height: "230px",
+                  height: "220px",
                   objectFit: "cover",
                 }}
               />
 
               {/* CONTENT */}
               <div style={{ padding: "20px" }}>
-                <p
-                  style={{
-                    color: "#38bdf8",
-                    marginBottom: "10px",
-                    fontWeight: "bold",
-                  }}
-                >
-                  {article.source}
-                </p>
-
                 <h2
                   style={{
                     color: "white",
-                    fontSize: "24px",
+                    fontSize: "22px",
                     marginBottom: "15px",
                     lineHeight: "1.5",
                   }}
@@ -298,54 +252,16 @@ This update highlights important developments in technology, innovation, startup
                   {article.title}
                 </h2>
 
-                {/* DATE */}
-                <p
-                  style={{
-                    color: "#94a3b8",
-                    marginBottom: "15px",
-                  }}
-                >
-                  {article.publishedAt}
-                </p>
-
                 {/* SUMMARY */}
                 <p
                   style={{
                     color: "#cbd5e1",
                     lineHeight: "1.7",
-                    marginBottom: "15px",
+                    marginBottom: "18px",
                   }}
                 >
-                  {expandedSummary === article.id
-                    ? article.summary
-                    : article.summary.slice(0, 120) +
-                      "..."}
+                  {article.summary}
                 </p>
-
-                {/* AI SUMMARY BUTTON */}
-                <button
-                  onClick={() =>
-                    setExpandedSummary(
-                      expandedSummary === article.id
-                        ? null
-                        : article.id
-                    )
-                  }
-                  style={{
-                    background: "#06b6d4",
-                    border: "none",
-                    color: "white",
-                    padding: "10px 15px",
-                    borderRadius: "10px",
-                    cursor: "pointer",
-                    marginBottom: "15px",
-                    fontWeight: "bold",
-                  }}
-                >
-                  {expandedSummary === article.id
-                    ? "Hide Summary"
-                    : "AI Summary"}
-                </button>
 
                 {/* READING TIME */}
                 <div
@@ -354,7 +270,7 @@ This update highlights important developments in technology, innovation, startup
                     alignItems: "center",
                     gap: "8px",
                     color: "#94a3b8",
-                    marginBottom: "20px",
+                    marginBottom: "18px",
                   }}
                 >
                   <Clock3 size={18} />
@@ -367,16 +283,15 @@ This update highlights important developments in technology, innovation, startup
                     display: "flex",
                     flexWrap: "wrap",
                     gap: "10px",
-                    marginBottom: "15px",
                   }}
                 >
-                  {/* READ ARTICLE */}
+                  {/* READ MORE */}
                   <a
                     href={article.url}
                     target="_blank"
                     rel="noreferrer"
                     style={{
-                      background: "#7c3aed",
+                      background: "#2563eb",
                       color: "white",
                       padding: "10px 15px",
                       borderRadius: "10px",
@@ -387,30 +302,9 @@ This update highlights important developments in technology, innovation, startup
                       fontWeight: "bold",
                     }}
                   >
-                    Read Article
+                    Read More
                     <ExternalLink size={16} />
                   </a>
-
-                  {/* LIKE */}
-                  <button
-                    onClick={() => toggleLike(article)}
-                    style={{
-                      background: liked
-                        ? "#dc2626"
-                        : "#374151",
-                      border: "none",
-                      color: "white",
-                      padding: "10px 15px",
-                      borderRadius: "10px",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                    }}
-                  >
-                    <Heart size={18} />
-                    Like
-                  </button>
 
                   {/* BOOKMARK */}
                   <button
@@ -421,6 +315,7 @@ This update highlights important developments in technology, innovation, startup
                       background: bookmarked
                         ? "#16a34a"
                         : "#374151",
+
                       border: "none",
                       color: "white",
                       padding: "10px 15px",
@@ -439,57 +334,78 @@ This update highlights important developments in technology, innovation, startup
 
                     Save
                   </button>
-                </div>
 
-                {/* COMMENTS */}
-                <div
-                  style={{
-                    background: "#1f2937",
-                    padding: "12px",
-                    borderRadius: "12px",
-                  }}
-                >
-                  <div
+                  {/* DOWNLOAD */}
+                  <button
+                    onClick={() =>
+                      downloadSummary(article)
+                    }
                     style={{
+                      background: "#7c3aed",
+                      border: "none",
+                      color: "white",
+                      padding: "10px 15px",
+                      borderRadius: "10px",
+                      cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
                       gap: "6px",
-                      marginBottom: "10px",
-                      color: "white",
                     }}
                   >
-                    <MessageCircle size={18} />
-                    Comments
-                  </div>
-
-                  <textarea
-                    placeholder="Write your thoughts..."
-                    value={comments[article.id] || ""}
-                    onChange={(e) =>
-                      handleComment(
-                        article.id,
-                        e.target.value
-                      )
-                    }
-                    style={{
-                      width: "100%",
-                      minHeight: "80px",
-                      background: "#111827",
-                      border: "none",
-                      outline: "none",
-                      color: "white",
-                      padding: "10px",
-                      borderRadius: "10px",
-                      resize: "none",
-                    }}
-                  />
+                    <Download size={18} />
+                    Download
+                  </button>
                 </div>
               </div>
             </div>
           );
         })}
       </div>
+
+      {/* SAVED ARTICLES */}
+      <div style={{ marginTop: "60px" }}>
+        <h2
+          style={{
+            color: "white",
+            marginBottom: "20px",
+            fontSize: "32px",
+          }}
+        >
+          Saved Articles
+        </h2>
+
+        {bookmarks.length === 0 ? (
+          <p style={{ color: "#94a3b8" }}>
+            No saved articles yet.
+          </p>
+        ) : (
+          bookmarks.map((item, index) => (
+            <div
+              key={index}
+              style={{
+                background: "#111827",
+                padding: "15px",
+                borderRadius: "12px",
+                marginBottom: "12px",
+              }}
+            >
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  color: "#60a5fa",
+                  textDecoration: "none",
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                }}
+              >
+                {item.title}
+              </a>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
-```
