@@ -1,479 +1,494 @@
 ```jsx
+// NewsFeed.jsx
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import InfiniteScroll from "react-infinite-scroll-component";
-
 import {
   Heart,
   Bookmark,
-  Share2,
+  BookmarkCheck,
   MessageCircle,
+  ExternalLink,
   Clock3,
-  Search,
-  Cpu,
-  ChevronDown,
-  ChevronUp,
-  Flame,
 } from "lucide-react";
 
-const API_KEY = "4f676d614fd34cad91b0fdc8f658cf6c";
+const API_KEY = "7e1b48a2f0a348cf97c75ba2ecf6f6ea";
 
 export default function NewsFeed() {
   const [articles, setArticles] = useState([]);
-  const [filtered, setFiltered] = useState([]);
-  const [search, setSearch] = useState("");
-  const [expanded, setExpanded] = useState(null);
-
-  const [liked, setLiked] = useState(
-    JSON.parse(localStorage.getItem("liked")) || {}
-  );
-
-  const [saved, setSaved] = useState(
-    JSON.parse(localStorage.getItem("saved")) || {}
-  );
-
-  const [comments, setComments] = useState(
-    JSON.parse(localStorage.getItem("comments")) || {}
-  );
-
-  const [inputComment, setInputComment] = useState({});
-
   const [loading, setLoading] = useState(true);
 
-  const categories = [
-    "All",
-    "AI",
-    "Cybersecurity",
-    "Startups",
-    "Gadgets",
-    "Robotics",
-    "Blockchain",
-    "Programming",
-  ];
+  const [likedArticles, setLikedArticles] = useState(
+    JSON.parse(localStorage.getItem("likedArticles")) || []
+  );
 
-  // Fetch News
+  const [bookmarks, setBookmarks] = useState(
+    JSON.parse(localStorage.getItem("bookmarks")) || []
+  );
+
+  const [comments, setComments] = useState({});
+  const [expandedSummary, setExpandedSummary] = useState(null);
+
+  useEffect(() => {
+    fetchNews();
+  }, []);
+
+  // FETCH NEWS
   const fetchNews = async () => {
     try {
       setLoading(true);
 
+      // Random page for fresh articles
+      const randomPage = Math.floor(Math.random() * 10) + 1;
+
+      // Prevent caching
+      const timestamp = new Date().getTime();
+
+      // QUERY
+      const query =
+        "technology OR AI OR gadgets OR cybersecurity OR startups OR robotics OR blockchain";
+
+      // API CALL
       const response = await axios.get(
-        `https://newsapi.org/v2/everything?q=technology OR AI OR gadgets OR cybersecurity OR startups OR robotics OR blockchain&language=en&sortBy=publishedAt&pageSize=50&apiKey=${API_KEY}`
+        `https://newsapi.org/v2/everything?q=${encodeURIComponent(
+          query
+        )}&domains=indianexpress.com&language=en&sortBy=publishedAt&pageSize=50&page=${randomPage}&apiKey=${API_KEY}&t=${timestamp}`
       );
 
-      const news = response.data.articles.map((article, index) => ({
-        ...article,
-        id: index + Math.random(),
-        summary: generateSummary(article),
-        readTime: calculateReadTime(
-          article.content || article.description || ""
-        ),
-      }));
+      const formattedArticles = response.data.articles.map(
+        (article, index) => ({
+          id: `${index}-${Date.now()}`,
+          title: article.title,
+          description: article.description,
+          content: article.content,
+          image:
+            article.urlToImage ||
+            "https://images.unsplash.com/photo-1518770660439-4636190af475",
 
-      setArticles(news);
-      setFiltered(news);
-    } catch (err) {
-      console.log(err);
-    } finally {
+          // Direct Indian Express link
+          url: article.url,
+
+          source: article.source.name,
+
+          publishedAt: new Date(
+            article.publishedAt
+          ).toLocaleDateString(),
+
+          // AI-like summary
+          summary: generateAISummary(
+            article.title,
+            article.description,
+            article.content
+          ),
+
+          // Reading time
+          readingTime: calculateReadingTime(
+            article.content || article.description || ""
+          ),
+        })
+      );
+
+      // Shuffle articles
+      const shuffled = formattedArticles.sort(
+        () => Math.random() - 0.5
+      );
+
+      setArticles(shuffled);
+
+      setLoading(false);
+    } catch (error) {
+      console.log(error);
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchNews();
+  // AI SUMMARY
+  const generateAISummary = (
+    title,
+    description,
+    content
+  ) => {
+    const text = `
+      ${title || ""}
+      ${description || ""}
+      ${content || ""}
+    `;
 
-    const interval = setInterval(() => {
-      fetchNews();
-    }, 120000);
+    if (!text) {
+      return "No detailed summary available.";
+    }
 
-    return () => clearInterval(interval);
-  }, []);
+    const words = text.split(" ");
 
-  // Search
-  useEffect(() => {
-    const result = articles.filter((article) =>
-      article.title?.toLowerCase().includes(search.toLowerCase())
-    );
-
-    setFiltered(result);
-  }, [search, articles]);
-
-  // AI Summary
-  const generateSummary = (article) => {
-    const text =
-      article.description ||
-      article.content ||
-      "Technology industry evolving rapidly.";
+    const shortSummary = words
+      .slice(0, 45)
+      .join(" ");
 
     return `
-🚀 Tech Insight:
-${text}
+${shortSummary}...
 
-🔥 Major Discovery:
-${text.slice(0, 140)}...
-
-📌 Why This Matters:
-This development could influence AI systems,
-cybersecurity, startups, gadgets, and the future
-of global technology innovation.
-`;
+Key Takeaway:
+This update highlights important developments in technology, innovation, startups, and the digital ecosystem.
+    `;
   };
 
-  // Reading Time
-  const calculateReadTime = (text) => {
+  // READING TIME
+  const calculateReadingTime = (text) => {
     const words = text.split(" ").length;
-    return Math.max(1, Math.ceil(words / 200));
+
+    const minutes = Math.ceil(words / 200);
+
+    return `${minutes} min read`;
   };
 
-  // Time Ago
-  const timeAgo = (date) => {
-    const seconds = Math.floor(
-      (new Date() - new Date(date)) / 1000
+  // LIKE
+  const toggleLike = (article) => {
+    const exists = likedArticles.find(
+      (item) => item.url === article.url
     );
 
-    let interval = seconds / 3600;
+    let updatedLikes;
 
-    if (interval < 1) {
-      interval = seconds / 60;
-      return `${Math.floor(interval)} mins ago`;
-    }
-
-    if (interval < 24) {
-      return `${Math.floor(interval)} hrs ago`;
-    }
-
-    return `${Math.floor(interval / 24)} days ago`;
-  };
-
-  // Like
-  const toggleLike = (id) => {
-    const updated = {
-      ...liked,
-      [id]: !liked[id],
-    };
-
-    setLiked(updated);
-
-    localStorage.setItem(
-      "liked",
-      JSON.stringify(updated)
-    );
-  };
-
-  // Save Bookmark
-  const toggleSave = (id) => {
-    const updated = {
-      ...saved,
-      [id]: !saved[id],
-    };
-
-    setSaved(updated);
-
-    localStorage.setItem(
-      "saved",
-      JSON.stringify(updated)
-    );
-  };
-
-  // Share
-  const shareArticle = async (article) => {
-    try {
-      await navigator.share({
-        title: article.title,
-        text: article.description,
-        url: article.url,
-      });
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  // Add Comment
-  const addComment = (id) => {
-    if (!inputComment[id]) return;
-
-    const updated = {
-      ...comments,
-      [id]: [...(comments[id] || []), inputComment[id]],
-    };
-
-    setComments(updated);
-
-    localStorage.setItem(
-      "comments",
-      JSON.stringify(updated)
-    );
-
-    setInputComment({
-      ...inputComment,
-      [id]: "",
-    });
-  };
-
-  // Category Filter
-  const filterCategory = (category) => {
-    if (category === "All") {
-      setFiltered(articles);
-    } else {
-      const filteredNews = articles.filter((article) =>
-        article.title
-          ?.toLowerCase()
-          .includes(category.toLowerCase())
+    if (exists) {
+      updatedLikes = likedArticles.filter(
+        (item) => item.url !== article.url
       );
-
-      setFiltered(filteredNews);
+    } else {
+      updatedLikes = [...likedArticles, article];
     }
+
+    setLikedArticles(updatedLikes);
+
+    localStorage.setItem(
+      "likedArticles",
+      JSON.stringify(updatedLikes)
+    );
+  };
+
+  // BOOKMARK
+  const toggleBookmark = (article) => {
+    const exists = bookmarks.find(
+      (item) => item.url === article.url
+    );
+
+    let updatedBookmarks;
+
+    if (exists) {
+      updatedBookmarks = bookmarks.filter(
+        (item) => item.url !== article.url
+      );
+    } else {
+      updatedBookmarks = [...bookmarks, article];
+    }
+
+    setBookmarks(updatedBookmarks);
+
+    localStorage.setItem(
+      "bookmarks",
+      JSON.stringify(updatedBookmarks)
+    );
+  };
+
+  // COMMENTS
+  const handleComment = (articleId, text) => {
+    setComments({
+      ...comments,
+      [articleId]: text,
+    });
   };
 
   if (loading) {
     return (
-      <div className="bg-[#020617] min-h-screen flex justify-center items-center text-white text-3xl font-bold">
-        Loading Tech Radar Dashboard...
+      <div
+        style={{
+          background: "#020617",
+          color: "white",
+          height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          fontSize: "28px",
+          fontWeight: "bold",
+        }}
+      >
+        Loading Latest Tech News...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#020617] p-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-5 mb-8">
-        <div className="flex items-center gap-3">
-          <Cpu
-            className="text-cyan-400"
-            size={42}
-          />
-
-          <h1 className="text-4xl font-bold text-cyan-400">
-            Tech Radar Dashboard
-          </h1>
-        </div>
-
-        {/* Search */}
-        <div className="flex items-center bg-[#0f172a] border border-cyan-500 rounded-xl px-4 py-3 w-full md:w-[400px]">
-          <Search className="text-gray-400" />
-
-          <input
-            type="text"
-            placeholder="Search technology news..."
-            className="bg-transparent outline-none text-white ml-3 w-full"
-            value={search}
-            onChange={(e) =>
-              setSearch(e.target.value)
-            }
-          />
-        </div>
-      </div>
-
-      {/* Trending */}
-      <div className="flex items-center gap-2 mb-5">
-        <Flame className="text-orange-400" />
-
-        <h2 className="text-2xl font-semibold text-white">
-          Trending Technology News
-        </h2>
-      </div>
-
-      {/* Categories */}
-      <div className="flex gap-3 flex-wrap mb-8">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() =>
-              filterCategory(cat)
-            }
-            className="bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2 rounded-xl transition-all"
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      {/* Infinite Scroll */}
-      <InfiniteScroll
-        dataLength={filtered.length}
-        next={fetchNews}
-        hasMore={true}
-        loader={
-          <h4 className="text-center text-white mt-10">
-            Loading more articles...
-          </h4>
-        }
+    <div
+      style={{
+        background: "#020617",
+        minHeight: "100vh",
+        padding: "30px",
+      }}
+    >
+      <h1
+        style={{
+          color: "white",
+          textAlign: "center",
+          fontSize: "42px",
+          marginBottom: "40px",
+        }}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filtered.map((article) => (
+        Indian Express Tech News
+      </h1>
+
+      {/* ARTICLES */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fit,minmax(350px,1fr))",
+          gap: "25px",
+        }}
+      >
+        {articles.map((article) => {
+          const liked = likedArticles.find(
+            (item) => item.url === article.url
+          );
+
+          const bookmarked = bookmarks.find(
+            (item) => item.url === article.url
+          );
+
+          return (
             <div
               key={article.id}
-              className="bg-[#0f172a] rounded-2xl overflow-hidden shadow-lg hover:scale-[1.03] hover:shadow-cyan-500/30 transition-all duration-300 border border-[#1e293b]"
+              style={{
+                background: "#111827",
+                borderRadius: "20px",
+                overflow: "hidden",
+                boxShadow:
+                  "0px 8px 30px rgba(0,0,0,0.4)",
+              }}
             >
-              {/* Image */}
+              {/* IMAGE */}
               <img
-                src={
-                  article.urlToImage ||
-                  "https://images.unsplash.com/photo-1518770660439-4636190af475"
-                }
+                src={article.image}
                 alt="news"
-                className="w-full h-56 object-cover"
+                style={{
+                  width: "100%",
+                  height: "230px",
+                  objectFit: "cover",
+                }}
               />
 
-              <div className="p-5">
-                {/* Source + Time */}
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-cyan-400 text-sm font-semibold">
-                    {article.source.name}
-                  </span>
+              {/* CONTENT */}
+              <div style={{ padding: "20px" }}>
+                <p
+                  style={{
+                    color: "#38bdf8",
+                    marginBottom: "10px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {article.source}
+                </p>
 
-                  <span className="text-gray-400 text-xs">
-                    {timeAgo(article.publishedAt)}
-                  </span>
-                </div>
-
-                {/* Title */}
-                <h2 className="text-xl font-bold text-white mb-3 line-clamp-2">
+                <h2
+                  style={{
+                    color: "white",
+                    fontSize: "24px",
+                    marginBottom: "15px",
+                    lineHeight: "1.5",
+                  }}
+                >
                   {article.title}
                 </h2>
 
-                {/* Reading Time */}
-                <div className="flex items-center gap-2 text-gray-400 text-sm mb-3">
-                  <Clock3 size={16} />
-                  {article.readTime} min read
-                </div>
-
-                {/* Summary */}
-                <p className="text-gray-300 text-sm whitespace-pre-line">
-                  {expanded === article.id
-                    ? article.summary
-                    : `${article.summary.slice(
-                        0,
-                        180
-                      )}...`}
+                {/* DATE */}
+                <p
+                  style={{
+                    color: "#94a3b8",
+                    marginBottom: "15px",
+                  }}
+                >
+                  {article.publishedAt}
                 </p>
 
-                {/* Expand */}
+                {/* SUMMARY */}
+                <p
+                  style={{
+                    color: "#cbd5e1",
+                    lineHeight: "1.7",
+                    marginBottom: "15px",
+                  }}
+                >
+                  {expandedSummary === article.id
+                    ? article.summary
+                    : article.summary.slice(0, 120) +
+                      "..."}
+                </p>
+
+                {/* AI SUMMARY BUTTON */}
                 <button
                   onClick={() =>
-                    setExpanded(
-                      expanded === article.id
+                    setExpandedSummary(
+                      expandedSummary === article.id
                         ? null
                         : article.id
                     )
                   }
-                  className="text-cyan-400 mt-2 flex items-center gap-1"
+                  style={{
+                    background: "#06b6d4",
+                    border: "none",
+                    color: "white",
+                    padding: "10px 15px",
+                    borderRadius: "10px",
+                    cursor: "pointer",
+                    marginBottom: "15px",
+                    fontWeight: "bold",
+                  }}
                 >
-                  {expanded === article.id ? (
-                    <>
-                      Show Less{" "}
-                      <ChevronUp size={16} />
-                    </>
-                  ) : (
-                    <>
-                      Read More{" "}
-                      <ChevronDown size={16} />
-                    </>
-                  )}
+                  {expandedSummary === article.id
+                    ? "Hide Summary"
+                    : "AI Summary"}
                 </button>
 
-                {/* Actions */}
-                <div className="flex justify-between items-center mt-5">
-                  <button
-                    onClick={() =>
-                      toggleLike(article.id)
-                    }
-                    className={`${
-                      liked[article.id]
-                        ? "text-red-500"
-                        : "text-gray-400"
-                    }`}
+                {/* READING TIME */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    color: "#94a3b8",
+                    marginBottom: "20px",
+                  }}
+                >
+                  <Clock3 size={18} />
+                  <span>{article.readingTime}</span>
+                </div>
+
+                {/* BUTTONS */}
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "10px",
+                    marginBottom: "15px",
+                  }}
+                >
+                  {/* READ ARTICLE */}
+                  <a
+                    href={article.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      background: "#7c3aed",
+                      color: "white",
+                      padding: "10px 15px",
+                      borderRadius: "10px",
+                      textDecoration: "none",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      fontWeight: "bold",
+                    }}
                   >
-                    <Heart size={22} />
+                    Read Article
+                    <ExternalLink size={16} />
+                  </a>
+
+                  {/* LIKE */}
+                  <button
+                    onClick={() => toggleLike(article)}
+                    style={{
+                      background: liked
+                        ? "#dc2626"
+                        : "#374151",
+                      border: "none",
+                      color: "white",
+                      padding: "10px 15px",
+                      borderRadius: "10px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <Heart size={18} />
+                    Like
                   </button>
 
+                  {/* BOOKMARK */}
                   <button
                     onClick={() =>
-                      toggleSave(article.id)
+                      toggleBookmark(article)
                     }
-                    className={`${
-                      saved[article.id]
-                        ? "text-yellow-400"
-                        : "text-gray-400"
-                    }`}
+                    style={{
+                      background: bookmarked
+                        ? "#16a34a"
+                        : "#374151",
+                      border: "none",
+                      color: "white",
+                      padding: "10px 15px",
+                      borderRadius: "10px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
                   >
-                    <Bookmark size={22} />
-                  </button>
+                    {bookmarked ? (
+                      <BookmarkCheck size={18} />
+                    ) : (
+                      <Bookmark size={18} />
+                    )}
 
-                  <button
-                    onClick={() =>
-                      shareArticle(article)
-                    }
-                    className="text-gray-400"
-                  >
-                    <Share2 size={22} />
+                    Save
                   </button>
                 </div>
 
-                {/* Comments */}
-                <div className="mt-5">
-                  <div className="flex items-center gap-2 text-cyan-400 mb-2">
+                {/* COMMENTS */}
+                <div
+                  style={{
+                    background: "#1f2937",
+                    padding: "12px",
+                    borderRadius: "12px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      marginBottom: "10px",
+                      color: "white",
+                    }}
+                  >
                     <MessageCircle size={18} />
                     Comments
                   </div>
 
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Write a comment..."
-                      value={
-                        inputComment[
-                          article.id
-                        ] || ""
-                      }
-                      onChange={(e) =>
-                        setInputComment({
-                          ...inputComment,
-                          [article.id]:
-                            e.target.value,
-                        })
-                      }
-                      className="flex-1 bg-[#1e293b] text-white p-2 rounded-lg outline-none"
-                    />
-
-                    <button
-                      onClick={() =>
-                        addComment(article.id)
-                      }
-                      className="bg-cyan-500 px-4 rounded-lg text-white"
-                    >
-                      Post
-                    </button>
-                  </div>
-
-                  {/* Comment List */}
-                  <div className="space-y-2 mt-3">
-                    {(comments[article.id] || []).map(
-                      (comment, index) => (
-                        <div
-                          key={index}
-                          className="bg-[#1e293b] text-gray-200 p-2 rounded-lg text-sm"
-                        >
-                          {comment}
-                        </div>
+                  <textarea
+                    placeholder="Write your thoughts..."
+                    value={comments[article.id] || ""}
+                    onChange={(e) =>
+                      handleComment(
+                        article.id,
+                        e.target.value
                       )
-                    )}
-                  </div>
+                    }
+                    style={{
+                      width: "100%",
+                      minHeight: "80px",
+                      background: "#111827",
+                      border: "none",
+                      outline: "none",
+                      color: "white",
+                      padding: "10px",
+                      borderRadius: "10px",
+                      resize: "none",
+                    }}
+                  />
                 </div>
-
-                {/* Read Full Article */}
-                <a
-                  href={article.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block mt-5 bg-cyan-500 hover:bg-cyan-600 text-white text-center py-3 rounded-xl font-semibold transition-all"
-                >
-                  Read Full Article
-                </a>
               </div>
             </div>
-          ))}
-        </div>
-      </InfiniteScroll>
+          );
+        })}
+      </div>
     </div>
   );
 }
