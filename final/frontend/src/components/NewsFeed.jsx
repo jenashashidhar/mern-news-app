@@ -1,61 +1,99 @@
+```javascript
 import React, { useEffect, useState } from "react";
 
 export default function NewsFeed() {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetch("http://localhost:5000/api/tech-news")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to fetch news");
+        }
+        return res.json();
+      })
       .then((data) => {
-        setArticles(data);
+        console.log("API DATA:", data);
+
+        if (Array.isArray(data)) {
+          setArticles(data);
+        } else {
+          setError("Invalid data received");
+        }
+
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Fetch Error:", err);
+        console.error(err);
+        setError("Backend not connected");
         setLoading(false);
       });
   }, []);
 
-  if (loading) {
-    return (
-      <div
-        style={{
-          color: "white",
-          textAlign: "center",
-          marginTop: "50px",
-          fontSize: "24px",
-        }}
-      >
-        Loading Tech News...
-      </div>
-    );
-  }
-
   return (
     <div
       style={{
-        background: "#0f172a",
+        background: "#020617",
         minHeight: "100vh",
         padding: "30px",
         color: "white",
+        fontFamily: "Arial",
       }}
     >
       <h1
         style={{
           textAlign: "center",
-          marginBottom: "40px",
           fontSize: "42px",
+          marginBottom: "40px",
           color: "#38bdf8",
         }}
       >
         AI Tech News Dashboard
       </h1>
 
+      {loading && (
+        <h2
+          style={{
+            textAlign: "center",
+            color: "#94a3b8",
+          }}
+        >
+          Loading latest tech news...
+        </h2>
+      )}
+
+      {error && (
+        <div
+          style={{
+            background: "#7f1d1d",
+            padding: "15px",
+            borderRadius: "10px",
+            textAlign: "center",
+            marginBottom: "20px",
+            color: "white",
+          }}
+        >
+          {error}
+        </div>
+      )}
+
+      {!loading && articles.length === 0 && (
+        <h2
+          style={{
+            textAlign: "center",
+            color: "#f87171",
+          }}
+        >
+          No articles found
+        </h2>
+      )}
+
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(350px,1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))",
           gap: "25px",
         }}
       >
@@ -63,17 +101,18 @@ export default function NewsFeed() {
           <div
             key={index}
             style={{
-              background: "#1e293b",
+              background: "#111827",
               padding: "20px",
               borderRadius: "16px",
-              boxShadow: "0 0 15px rgba(56,189,248,0.2)",
+              border: "1px solid #1e293b",
+              boxShadow: "0 0 20px rgba(56,189,248,0.15)",
             }}
           >
             <h2
               style={{
                 color: "#38bdf8",
                 marginBottom: "15px",
-                fontSize: "22px",
+                fontSize: "24px",
               }}
             >
               {article.title}
@@ -81,8 +120,8 @@ export default function NewsFeed() {
 
             <p
               style={{
-                color: "#e2e8f0",
-                lineHeight: "1.7",
+                color: "#cbd5e1",
+                lineHeight: "1.8",
                 marginBottom: "20px",
               }}
             >
@@ -94,10 +133,11 @@ export default function NewsFeed() {
               target="_blank"
               rel="noreferrer"
               style={{
+                display: "inline-block",
                 background: "#38bdf8",
                 color: "#0f172a",
                 padding: "10px 18px",
-                borderRadius: "8px",
+                borderRadius: "10px",
                 textDecoration: "none",
                 fontWeight: "bold",
               }}
@@ -110,3 +150,4 @@ export default function NewsFeed() {
     </div>
   );
 }
+```
